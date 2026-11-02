@@ -1,13 +1,38 @@
+import sqlite3
 import pytest
 import app as app_module
 
 
+def register_user(client, email="test@example.com", password="secret123",
+                  name="Test User"):
+    return client.post("/register", data={
+        "full_name": name,
+        "email": email,
+        "password": password,
+        "confirm_password": password,
+    })
+
+
+def login_user(client, email="test@example.com", password="secret123"):
+    return client.post("/login", data={
+        "email": email,
+        "password": password,
+    })
+
+
 @pytest.fixture
-def client(tmp_path):
+def anon_client(tmp_path):
     app_module.DATABASE = str(tmp_path / "test.db")
     app_module.init_db()
     app_module.app.config["TESTING"] = True
     return app_module.app.test_client()
+
+
+@pytest.fixture
+def client(anon_client):
+    register_user(anon_client)
+    login_user(anon_client)
+    return anon_client
 
 
 def add_sample(client, company="Google", role="SDE Intern", status="Applied"):
@@ -23,6 +48,8 @@ def add_sample(client, company="Google", role="SDE Intern", status="Applied"):
         "notes": "",
     })
 
+
+# ----- Application features (logged in) -----
 
 def test_home_page_loads(client):
     response = client.get("/")
@@ -109,3 +136,75 @@ def test_export_csv(client):
     assert "attachment" in response.headers["Content-Disposition"]
     assert b"Company,Role" in response.data
     assert b"Google" in response.data
+
+
+# ----- Login and security -----
+
+def test_dashboard_requires_login(anon_client):
+    response = anon_client.get("/")
+    assert response.status_code == 302
+    assert "/login" in response.headers["Location"]
+
+
+def test_other_pages_require_login(anon_client):
+    for url in ["/add", "/export", "/edit/1"]:
+        response = anon_client.get(url)
+        assert response.status_code == 302
+        assert "/login" in response.headers["Location"]
+
+
+def test_register_and_login(anon_client):
+    register_user(anon_client)
+    response = login_user(anon_client)
+    assert response.status_code == 302
+
+    home = anon_client.get("/")
+    assert home.status_code == 200
+    assert b"Test User" in home.data
+
+
+def test_register_duplicate_email(anon_client):
+    register_user(anon_client)
+    response = register_user(anon_client)
+    assert b"An account with this email already exists." in response.data
+
+
+def test_register_short_password(anon_client):
+    response = register_user(anon_client, password="abc")
+    assert b"Password must be at least 6 characters." in response.data
+
+
+def test_login_wrong_password(anon_client):
+    register_user(anon_client)
+    response = login_user(anon_client, password="wrongpass")
+    assert b"Invalid email or password." in response.data
+
+
+def test_logout(client):
+    client.post("/logout")
+    response = client.get("/")
+    assert response.status_code == 302
+    assert "/login" in response.headers["Location"]
+
+
+def test_password_is_hashed(anon_client):
+    register_user(anon_client, password="secret123")
+    conn = sqlite3.connect(app_module.DATABASE)
+    saved = conn.execute("SELECT password_hash FROM users").fetchone()[0]
+    conn.close()
+    assert saved != "secret123"
+    assert "secret123" not in saved
+
+
+def test_users_see_only_their_own_applications(client):
+    add_sample(client, company="Google")
+
+    other = app_module.app.test_client()
+    register_user(other, email="other@example.com", name="Other User")
+    login_user(other, email="other@example.com")
+
+    assert b"Google" not in other.get("/").data
+    assert other.get("/edit/1").status_code == 404
+
+    other.post("/delete/1")
+    assert b"Google" in client.get("/").data

@@ -1,0 +1,23 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Login - InternTrack{% endblock %}
+
+{% block content %}
+<h2>Welcome back</h2>
+
+{% if error %}
+    <p class="error">{{ error }}</p>
+{% endif %}
+
+<form class="auth-form" method="POST" action="/login">
+    <label>Email
+        <input type="email" name="email" placeholder="you@example.com" required>
+    </label>
+    <label>Password
+        <input type="password" name="password" placeholder="Your password" required>
+    </label>
+    <button class="btn" type="submit">Login</button>
+</form>
+
+<p class="auth-switch">New here? <a href="/register">Create an account</a></p>
+{% endblock %}

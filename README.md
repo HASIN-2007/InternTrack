@@ -91,4 +91,4 @@ pytest
 
 ## Author
 
-Hasin, B.Tech CSE student, B.M.S. College of Engineering
+Hasin, B.Tech CSE student, Dr.RVR NRI Institute of Technology Deemed to be university.

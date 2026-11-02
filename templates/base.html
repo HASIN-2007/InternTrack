@@ -15,6 +15,15 @@
                 <a href="/add" class="{% if request.path == '/add' %}active{% endif %}">Add Application</a>
                 <a href="/export">Export CSV</a>
             </nav>
+
+            {% if session.get("user_name") %}
+            <div class="user-box">
+                <p class="user-name">{{ session["user_name"] }}</p>
+                <form method="POST" action="/logout">
+                    <button class="btn-logout" type="submit">Logout</button>
+                </form>
+            </div>
+            {% endif %}
         </aside>
 
         <main class="content">

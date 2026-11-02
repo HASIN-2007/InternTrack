@@ -1,15 +1,28 @@
 import csv
 import io
+import os
 import sqlite3
-from flask import Flask, render_template, request, redirect, abort, Response
+from flask import (Flask, render_template, request, redirect, abort,
+                   Response, session)
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
 
 DATABASE = "database.db"
 
 
 def init_db():
     conn = sqlite3.connect(DATABASE)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            full_name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS applications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,23 +35,111 @@ def init_db():
             application_status TEXT NOT NULL DEFAULT 'Applied',
             job_link TEXT,
             notes TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            user_id INTEGER
         )
     """)
+
+    columns = [row[1] for row in conn.execute("PRAGMA table_info(applications)")]
+    if "user_id" not in columns:
+        conn.execute("ALTER TABLE applications ADD COLUMN user_id INTEGER")
+
     conn.commit()
     conn.close()
 
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if "user_id" in session:
+        return redirect("/")
+
+    error = None
+
+    if request.method == "POST":
+        full_name = request.form["full_name"].strip()
+        email = request.form["email"].strip().lower()
+        password = request.form["password"]
+        confirm_password = request.form["confirm_password"]
+
+        if full_name == "" or email == "" or password == "":
+            error = "All fields are required."
+        elif "@" not in email:
+            error = "Enter a valid email address."
+        elif len(password) < 6:
+            error = "Password must be at least 6 characters."
+        elif password != confirm_password:
+            error = "Passwords do not match."
+        else:
+            conn = sqlite3.connect(DATABASE)
+            existing = conn.execute(
+                "SELECT id FROM users WHERE email = ?", (email,)
+            ).fetchone()
+
+            if existing is not None:
+                error = "An account with this email already exists."
+                conn.close()
+            else:
+                conn.execute(
+                    "INSERT INTO users (full_name, email, password_hash) "
+                    "VALUES (?, ?, ?)",
+                    (full_name, email, generate_password_hash(password)),
+                )
+                conn.commit()
+                conn.close()
+                return redirect("/login")
+
+    return render_template("register.html", error=error)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if "user_id" in session:
+        return redirect("/")
+
+    error = None
+
+    if request.method == "POST":
+        email = request.form["email"].strip().lower()
+        password = request.form["password"]
+
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row
+        user = conn.execute(
+            "SELECT * FROM users WHERE email = ?", (email,)
+        ).fetchone()
+        conn.close()
+
+        if user is None or not check_password_hash(user["password_hash"], password):
+            error = "Invalid email or password."
+        else:
+            session.clear()
+            session["user_id"] = user["id"]
+            session["user_name"] = user["full_name"]
+            return redirect("/")
+
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return redirect("/login")
+
+
 @app.route("/")
 def home():
+    if "user_id" not in session:
+        return redirect("/login")
+    user_id = session["user_id"]
+
     search = request.args.get("search", "").strip()
     status = request.args.get("status", "")
 
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
 
-    query = "SELECT * FROM applications WHERE 1=1"
-    params = []
+    query = "SELECT * FROM applications WHERE user_id = ?"
+    params = [user_id]
 
     if search != "":
         query += " AND (company_name LIKE ? OR job_role LIKE ?)"
@@ -53,19 +154,23 @@ def home():
     applications = conn.execute(query, params).fetchall()
 
     total = conn.execute(
-        "SELECT COUNT(*) FROM applications"
+        "SELECT COUNT(*) FROM applications WHERE user_id = ?",
+        (user_id,),
     ).fetchone()[0]
     applied = conn.execute(
-        "SELECT COUNT(*) FROM applications WHERE application_status = ?",
-        ("Applied",),
+        "SELECT COUNT(*) FROM applications "
+        "WHERE user_id = ? AND application_status = ?",
+        (user_id, "Applied"),
     ).fetchone()[0]
     interview = conn.execute(
-        "SELECT COUNT(*) FROM applications WHERE application_status = ?",
-        ("Interview",),
+        "SELECT COUNT(*) FROM applications "
+        "WHERE user_id = ? AND application_status = ?",
+        (user_id, "Interview"),
     ).fetchone()[0]
     selected = conn.execute(
-        "SELECT COUNT(*) FROM applications WHERE application_status = ?",
-        ("Selected",),
+        "SELECT COUNT(*) FROM applications "
+        "WHERE user_id = ? AND application_status = ?",
+        (user_id, "Selected"),
     ).fetchone()[0]
 
     conn.close()
@@ -83,6 +188,10 @@ def home():
 
 @app.route("/add", methods=["GET", "POST"])
 def add_application():
+    if "user_id" not in session:
+        return redirect("/login")
+    user_id = session["user_id"]
+
     error = None
 
     if request.method == "POST":
@@ -102,11 +211,11 @@ def add_application():
             conn = sqlite3.connect(DATABASE)
             conn.execute(
                 """INSERT INTO applications
-                (company_name, job_role, job_type, location, applied_date,
-                 deadline, application_status, job_link, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (company_name, job_role, job_type, location, applied_date,
-                 deadline, application_status, job_link, notes),
+                (user_id, company_name, job_role, job_type, location,
+                 applied_date, deadline, application_status, job_link, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (user_id, company_name, job_role, job_type, location,
+                 applied_date, deadline, application_status, job_link, notes),
             )
             conn.commit()
             conn.close()
@@ -117,10 +226,15 @@ def add_application():
 
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit_application(id):
+    if "user_id" not in session:
+        return redirect("/login")
+    user_id = session["user_id"]
+
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     application = conn.execute(
-        "SELECT * FROM applications WHERE id = ?", (id,)
+        "SELECT * FROM applications WHERE id = ? AND user_id = ?",
+        (id, user_id),
     ).fetchone()
 
     if application is None:
@@ -160,9 +274,9 @@ def edit_application(id):
                 SET company_name = ?, job_role = ?, job_type = ?,
                     location = ?, applied_date = ?, deadline = ?,
                     application_status = ?, job_link = ?, notes = ?
-                WHERE id = ?""",
+                WHERE id = ? AND user_id = ?""",
                 (company_name, job_role, job_type, location, applied_date,
-                 deadline, application_status, job_link, notes, id),
+                 deadline, application_status, job_link, notes, id, user_id),
             )
             conn.commit()
             conn.close()
@@ -174,8 +288,15 @@ def edit_application(id):
 
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete_application(id):
+    if "user_id" not in session:
+        return redirect("/login")
+    user_id = session["user_id"]
+
     conn = sqlite3.connect(DATABASE)
-    conn.execute("DELETE FROM applications WHERE id = ?", (id,))
+    conn.execute(
+        "DELETE FROM applications WHERE id = ? AND user_id = ?",
+        (id, user_id),
+    )
     conn.commit()
     conn.close()
     return redirect("/")
@@ -183,10 +304,15 @@ def delete_application(id):
 
 @app.route("/export")
 def export_csv():
+    if "user_id" not in session:
+        return redirect("/login")
+    user_id = session["user_id"]
+
     conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
-        "SELECT * FROM applications ORDER BY id DESC"
+        "SELECT * FROM applications WHERE user_id = ? ORDER BY id DESC",
+        (user_id,),
     ).fetchall()
     conn.close()
 
