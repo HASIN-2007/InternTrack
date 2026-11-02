@@ -1,5 +1,5 @@
 import sqlite3
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, abort
 
 app = Flask(__name__)
 
@@ -68,6 +68,63 @@ def add_application():
             return redirect("/")
 
     return render_template("add.html", error=error)
+
+
+@app.route("/edit/<int:id>", methods=["GET", "POST"])
+def edit_application(id):
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    application = conn.execute(
+        "SELECT * FROM applications WHERE id = ?", (id,)
+    ).fetchone()
+
+    if application is None:
+        conn.close()
+        abort(404)
+
+    error = None
+
+    if request.method == "POST":
+        company_name = request.form["company_name"].strip()
+        job_role = request.form["job_role"].strip()
+        job_type = request.form["job_type"]
+        location = request.form["location"].strip()
+        applied_date = request.form["applied_date"]
+        deadline = request.form["deadline"]
+        application_status = request.form["application_status"]
+        job_link = request.form["job_link"].strip()
+        notes = request.form["notes"].strip()
+
+        if company_name == "" or job_role == "":
+            error = "Company name and job role are required."
+            application = {
+                "id": id,
+                "company_name": company_name,
+                "job_role": job_role,
+                "job_type": job_type,
+                "location": location,
+                "applied_date": applied_date,
+                "deadline": deadline,
+                "application_status": application_status,
+                "job_link": job_link,
+                "notes": notes,
+            }
+        else:
+            conn.execute(
+                """UPDATE applications
+                SET company_name = ?, job_role = ?, job_type = ?,
+                    location = ?, applied_date = ?, deadline = ?,
+                    application_status = ?, job_link = ?, notes = ?
+                WHERE id = ?""",
+                (company_name, job_role, job_type, location, applied_date,
+                 deadline, application_status, job_link, notes, id),
+            )
+            conn.commit()
+            conn.close()
+            return redirect("/")
+
+    conn.close()
+    return render_template("edit.html", application=application, error=error)
 
 
 @app.route("/delete/<int:id>", methods=["POST"])

@@ -30,6 +30,7 @@
             <td>{{ app["application_status"] }}</td>
             <td>{{ app["deadline"] }}</td>
             <td>
+                <a href="/edit/{{ app['id'] }}">Edit</a>
                 <form method="POST" action="/delete/{{ app['id'] }}"
                       onsubmit="return confirm('Delete this application?');">
                     <button type="submit">Delete</button>
