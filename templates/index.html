@@ -7,5 +7,32 @@
     <h1>Welcome to InternTrack</h1>
     <p>Track your internship and job applications in one place.</p>
     <p><a href="/add">Add Application</a></p>
+
+    <h2>All Applications</h2>
+
+    {% if applications %}
+    <table border="1" cellpadding="6">
+        <tr>
+            <th>Company</th>
+            <th>Role</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Deadline</th>
+        </tr>
+        {% for app in applications %}
+        <tr>
+            <td>{{ app["company_name"] }}</td>
+            <td>{{ app["job_role"] }}</td>
+            <td>{{ app["job_type"] }}</td>
+            <td>{{ app["location"] }}</td>
+            <td>{{ app["application_status"] }}</td>
+            <td>{{ app["deadline"] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No applications yet. Click "Add Application" to start.</p>
+    {% endif %}
 </body>
 </html>

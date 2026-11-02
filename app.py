@@ -27,7 +27,13 @@ def init_db():
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    applications = conn.execute(
+        "SELECT * FROM applications ORDER BY id DESC"
+    ).fetchall()
+    conn.close()
+    return render_template("index.html", applications=applications)
 
 
 @app.route("/add", methods=["GET", "POST"])
