@@ -5,9 +5,11 @@ from flask import Flask, render_template, request, redirect, abort, Response
 
 app = Flask(__name__)
 
+DATABASE = "database.db"
+
 
 def init_db():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DATABASE)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS applications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +34,7 @@ def home():
     search = request.args.get("search", "").strip()
     status = request.args.get("status", "")
 
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
 
     query = "SELECT * FROM applications WHERE 1=1"
@@ -97,7 +99,7 @@ def add_application():
         if company_name == "" or job_role == "":
             error = "Company name and job role are required."
         else:
-            conn = sqlite3.connect("database.db")
+            conn = sqlite3.connect(DATABASE)
             conn.execute(
                 """INSERT INTO applications
                 (company_name, job_role, job_type, location, applied_date,
@@ -115,7 +117,7 @@ def add_application():
 
 @app.route("/edit/<int:id>", methods=["GET", "POST"])
 def edit_application(id):
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     application = conn.execute(
         "SELECT * FROM applications WHERE id = ?", (id,)
@@ -172,7 +174,7 @@ def edit_application(id):
 
 @app.route("/delete/<int:id>", methods=["POST"])
 def delete_application(id):
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DATABASE)
     conn.execute("DELETE FROM applications WHERE id = ?", (id,))
     conn.commit()
     conn.close()
@@ -181,7 +183,7 @@ def delete_application(id):
 
 @app.route("/export")
 def export_csv():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
         "SELECT * FROM applications ORDER BY id DESC"
