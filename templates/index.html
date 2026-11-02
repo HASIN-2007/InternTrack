@@ -8,6 +8,22 @@
     <p>Track your internship and job applications in one place.</p>
     <p><a href="/add">Add Application</a></p>
 
+    <h2>Overview</h2>
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Total</th>
+            <th>Applied</th>
+            <th>Interview</th>
+            <th>Selected</th>
+        </tr>
+        <tr>
+            <td>{{ total }}</td>
+            <td>{{ applied }}</td>
+            <td>{{ interview }}</td>
+            <td>{{ selected }}</td>
+        </tr>
+    </table>
+
     <h2>All Applications</h2>
 
     {% if applications %}

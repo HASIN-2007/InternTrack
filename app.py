@@ -29,11 +29,36 @@ def init_db():
 def home():
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
+
     applications = conn.execute(
         "SELECT * FROM applications ORDER BY id DESC"
     ).fetchall()
+
+    total = conn.execute(
+        "SELECT COUNT(*) FROM applications"
+    ).fetchone()[0]
+    applied = conn.execute(
+        "SELECT COUNT(*) FROM applications WHERE application_status = ?",
+        ("Applied",),
+    ).fetchone()[0]
+    interview = conn.execute(
+        "SELECT COUNT(*) FROM applications WHERE application_status = ?",
+        ("Interview",),
+    ).fetchone()[0]
+    selected = conn.execute(
+        "SELECT COUNT(*) FROM applications WHERE application_status = ?",
+        ("Selected",),
+    ).fetchone()[0]
+
     conn.close()
-    return render_template("index.html", applications=applications)
+    return render_template(
+        "index.html",
+        applications=applications,
+        total=total,
+        applied=applied,
+        interview=interview,
+        selected=selected,
+    )
 
 
 @app.route("/add", methods=["GET", "POST"])
