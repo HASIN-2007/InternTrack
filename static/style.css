@@ -234,3 +234,26 @@ input, select, textarea {
         grid-template-columns: 1fr;
     }
 }
+/* Search and filter */
+.filter-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.filter-form input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+}
+
+.btn-clear {
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.btn-clear:hover {
+    color: #1f2937;
+}

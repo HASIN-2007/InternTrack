@@ -31,6 +31,19 @@
         <a class="btn" href="/add">+ Add Application</a>
     </div>
 
+    <form class="filter-form" method="GET" action="/">
+        <input type="text" name="search" placeholder="Search by company or role"
+               value="{{ search }}">
+        <select name="status">
+            <option value="">All Statuses</option>
+            {% for s in ["Applied", "Shortlisted", "Interview", "Selected", "Rejected"] %}
+            <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn" type="submit">Search</button>
+        <a class="btn-clear" href="/">Clear</a>
+    </form>
+
     {% if applications %}
     <div class="table-wrap">
         <table>
@@ -66,6 +79,8 @@
             {% endfor %}
         </table>
     </div>
+    {% elif search or status %}
+    <p class="empty">No applications match your search.</p>
     {% else %}
     <p class="empty">No applications yet. Click "Add Application" to start.</p>
     {% endif %}

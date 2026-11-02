@@ -27,12 +27,26 @@ def init_db():
 
 @app.route("/")
 def home():
+    search = request.args.get("search", "").strip()
+    status = request.args.get("status", "")
+
     conn = sqlite3.connect("database.db")
     conn.row_factory = sqlite3.Row
 
-    applications = conn.execute(
-        "SELECT * FROM applications ORDER BY id DESC"
-    ).fetchall()
+    query = "SELECT * FROM applications WHERE 1=1"
+    params = []
+
+    if search != "":
+        query += " AND (company_name LIKE ? OR job_role LIKE ?)"
+        params.append("%" + search + "%")
+        params.append("%" + search + "%")
+
+    if status != "":
+        query += " AND application_status = ?"
+        params.append(status)
+
+    query += " ORDER BY id DESC"
+    applications = conn.execute(query, params).fetchall()
 
     total = conn.execute(
         "SELECT COUNT(*) FROM applications"
@@ -58,6 +72,8 @@ def home():
         applied=applied,
         interview=interview,
         selected=selected,
+        search=search,
+        status=status,
     )
 
 
