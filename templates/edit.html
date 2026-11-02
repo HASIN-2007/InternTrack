@@ -1,54 +1,55 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edit Application - InternTrack</title>
-</head>
-<body>
-    <h1>Edit Application</h1>
+{% extends "base.html" %}
 
+{% block title %}Edit Application - InternTrack{% endblock %}
+
+{% block content %}
+<h1>Edit Application</h1>
+<p class="subtitle">Update the details and save</p>
+
+<div class="panel">
     {% if error %}
-        <p style="color: red;">{{ error }}</p>
+        <p class="error">{{ error }}</p>
     {% endif %}
 
-    <form method="POST" action="/edit/{{ application['id'] }}">
-        <p>Company Name:
+    <form class="form-grid" method="POST" action="/edit/{{ application['id'] }}">
+        <label>Company Name
             <input type="text" name="company_name" value="{{ application['company_name'] }}">
-        </p>
-        <p>Job Role:
+        </label>
+        <label>Job Role
             <input type="text" name="job_role" value="{{ application['job_role'] }}">
-        </p>
-        <p>Job Type:
+        </label>
+        <label>Job Type
             <select name="job_type">
                 {% for t in ["Internship", "Full-time"] %}
                 <option {% if application['job_type'] == t %}selected{% endif %}>{{ t }}</option>
                 {% endfor %}
             </select>
-        </p>
-        <p>Location:
+        </label>
+        <label>Location
             <input type="text" name="location" value="{{ application['location'] }}">
-        </p>
-        <p>Applied Date:
+        </label>
+        <label>Applied Date
             <input type="date" name="applied_date" value="{{ application['applied_date'] }}">
-        </p>
-        <p>Deadline:
+        </label>
+        <label>Deadline
             <input type="date" name="deadline" value="{{ application['deadline'] }}">
-        </p>
-        <p>Status:
+        </label>
+        <label>Status
             <select name="application_status">
                 {% for s in ["Applied", "Shortlisted", "Interview", "Selected", "Rejected"] %}
                 <option {% if application['application_status'] == s %}selected{% endif %}>{{ s }}</option>
                 {% endfor %}
             </select>
-        </p>
-        <p>Job Link:
+        </label>
+        <label>Job Link
             <input type="text" name="job_link" value="{{ application['job_link'] }}">
-        </p>
-        <p>Notes:
-            <textarea name="notes">{{ application['notes'] }}</textarea>
-        </p>
-        <button type="submit">Update Application</button>
+        </label>
+        <label class="full">Notes
+            <textarea name="notes" rows="4">{{ application['notes'] }}</textarea>
+        </label>
+        <div class="full">
+            <button class="btn" type="submit">Update Application</button>
+        </div>
     </form>
-
-    <p><a href="/">Back to Home</a></p>
-</body>
-</html>
+</div>
+{% endblock %}

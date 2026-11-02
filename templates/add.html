@@ -1,28 +1,39 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Application - InternTrack</title>
-</head>
-<body>
-    <h1>Add Application</h1>
+{% extends "base.html" %}
 
+{% block title %}Add Application - InternTrack{% endblock %}
+
+{% block content %}
+<h1>Add Application</h1>
+<p class="subtitle">Fill in the details of your new application</p>
+
+<div class="panel">
     {% if error %}
-        <p style="color: red;">{{ error }}</p>
+        <p class="error">{{ error }}</p>
     {% endif %}
 
-    <form method="POST" action="/add">
-        <p>Company Name: <input type="text" name="company_name"></p>
-        <p>Job Role: <input type="text" name="job_role"></p>
-        <p>Job Type:
+    <form class="form-grid" method="POST" action="/add">
+        <label>Company Name
+            <input type="text" name="company_name">
+        </label>
+        <label>Job Role
+            <input type="text" name="job_role">
+        </label>
+        <label>Job Type
             <select name="job_type">
                 <option>Internship</option>
                 <option>Full-time</option>
             </select>
-        </p>
-        <p>Location: <input type="text" name="location"></p>
-        <p>Applied Date: <input type="date" name="applied_date"></p>
-        <p>Deadline: <input type="date" name="deadline"></p>
-        <p>Status:
+        </label>
+        <label>Location
+            <input type="text" name="location">
+        </label>
+        <label>Applied Date
+            <input type="date" name="applied_date">
+        </label>
+        <label>Deadline
+            <input type="date" name="deadline">
+        </label>
+        <label>Status
             <select name="application_status">
                 <option>Applied</option>
                 <option>Shortlisted</option>
@@ -30,12 +41,16 @@
                 <option>Selected</option>
                 <option>Rejected</option>
             </select>
-        </p>
-        <p>Job Link: <input type="text" name="job_link"></p>
-        <p>Notes: <textarea name="notes"></textarea></p>
-        <button type="submit">Save Application</button>
+        </label>
+        <label>Job Link
+            <input type="text" name="job_link">
+        </label>
+        <label class="full">Notes
+            <textarea name="notes" rows="4"></textarea>
+        </label>
+        <div class="full">
+            <button class="btn" type="submit">Save Application</button>
+        </div>
     </form>
-
-    <p><a href="/">Back to Home</a></p>
-</body>
-</html>
+</div>
+{% endblock %}

@@ -1,62 +1,73 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>InternTrack</title>
-</head>
-<body>
-    <h1>Welcome to InternTrack</h1>
-    <p>Track your internship and job applications in one place.</p>
-    <p><a href="/add">Add Application</a></p>
+{% extends "base.html" %}
 
-    <h2>Overview</h2>
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Total</th>
-            <th>Applied</th>
-            <th>Interview</th>
-            <th>Selected</th>
-        </tr>
-        <tr>
-            <td>{{ total }}</td>
-            <td>{{ applied }}</td>
-            <td>{{ interview }}</td>
-            <td>{{ selected }}</td>
-        </tr>
-    </table>
+{% block title %}Dashboard - InternTrack{% endblock %}
 
-    <h2>All Applications</h2>
+{% block content %}
+<h1>Dashboard</h1>
+<p class="subtitle">Keep going towards your dream career</p>
+
+<div class="cards">
+    <div class="card card-total">
+        <p>Total</p>
+        <h2>{{ total }}</h2>
+    </div>
+    <div class="card card-applied">
+        <p>Applied</p>
+        <h2>{{ applied }}</h2>
+    </div>
+    <div class="card card-interview">
+        <p>Interview</p>
+        <h2>{{ interview }}</h2>
+    </div>
+    <div class="card card-selected">
+        <p>Selected</p>
+        <h2>{{ selected }}</h2>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-header">
+        <h2>All Applications</h2>
+        <a class="btn" href="/add">+ Add Application</a>
+    </div>
 
     {% if applications %}
-    <table border="1" cellpadding="6">
-        <tr>
-            <th>Company</th>
-            <th>Role</th>
-            <th>Type</th>
-            <th>Location</th>
-            <th>Status</th>
-            <th>Deadline</th>
-            <th>Action</th>
-        </tr>
-        {% for app in applications %}
-        <tr>
-            <td>{{ app["company_name"] }}</td>
-            <td>{{ app["job_role"] }}</td>
-            <td>{{ app["job_type"] }}</td>
-            <td>{{ app["location"] }}</td>
-            <td>{{ app["application_status"] }}</td>
-            <td>{{ app["deadline"] }}</td>
-            <td>
-                <a href="/edit/{{ app['id'] }}">Edit</a>
-                <form method="POST" action="/delete/{{ app['id'] }}"
-                      onsubmit="return confirm('Delete this application?');">
-                    <button type="submit">Delete</button>
-                </form>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+    <div class="table-wrap">
+        <table>
+            <tr>
+                <th>Company</th>
+                <th>Role</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Deadline</th>
+                <th>Action</th>
+            </tr>
+            {% for app in applications %}
+            <tr>
+                <td>{{ app["company_name"] }}</td>
+                <td>{{ app["job_role"] }}</td>
+                <td>{{ app["job_type"] }}</td>
+                <td>{{ app["location"] }}</td>
+                <td>
+                    <span class="badge badge-{{ app['application_status']|lower }}">
+                        {{ app["application_status"] }}
+                    </span>
+                </td>
+                <td>{{ app["deadline"] }}</td>
+                <td class="actions">
+                    <a class="link-edit" href="/edit/{{ app['id'] }}">Edit</a>
+                    <form class="inline-form" method="POST" action="/delete/{{ app['id'] }}"
+                          onsubmit="return confirm('Delete this application?');">
+                        <button class="btn-delete" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
     {% else %}
-    <p>No applications yet. Click "Add Application" to start.</p>
+    <p class="empty">No applications yet. Click "Add Application" to start.</p>
     {% endif %}
-</body>
-</html>
+</div>
+{% endblock %}
