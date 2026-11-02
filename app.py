@@ -1,5 +1,7 @@
+import csv
+import io
 import sqlite3
-from flask import Flask, render_template, request, redirect, abort
+from flask import Flask, render_template, request, redirect, abort, Response
 
 app = Flask(__name__)
 
@@ -175,6 +177,35 @@ def delete_application(id):
     conn.commit()
     conn.close()
     return redirect("/")
+
+
+@app.route("/export")
+def export_csv():
+    conn = sqlite3.connect("database.db")
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT * FROM applications ORDER BY id DESC"
+    ).fetchall()
+    conn.close()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Company", "Role", "Job Type", "Location", "Applied Date",
+        "Deadline", "Status", "Job Link", "Notes",
+    ])
+    for row in rows:
+        writer.writerow([
+            row["company_name"], row["job_role"], row["job_type"],
+            row["location"], row["applied_date"], row["deadline"],
+            row["application_status"], row["job_link"], row["notes"],
+        ])
+
+    response = Response(output.getvalue(), mimetype="text/csv")
+    response.headers["Content-Disposition"] = (
+        "attachment; filename=applications.csv"
+    )
+    return response
 
 
 if __name__ == "__main__":
