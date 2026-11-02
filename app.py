@@ -70,6 +70,15 @@ def add_application():
     return render_template("add.html", error=error)
 
 
+@app.route("/delete/<int:id>", methods=["POST"])
+def delete_application(id):
+    conn = sqlite3.connect("database.db")
+    conn.execute("DELETE FROM applications WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect("/")
+
+
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)

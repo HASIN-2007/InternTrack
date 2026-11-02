@@ -19,6 +19,7 @@
             <th>Location</th>
             <th>Status</th>
             <th>Deadline</th>
+            <th>Action</th>
         </tr>
         {% for app in applications %}
         <tr>
@@ -28,6 +29,12 @@
             <td>{{ app["location"] }}</td>
             <td>{{ app["application_status"] }}</td>
             <td>{{ app["deadline"] }}</td>
+            <td>
+                <form method="POST" action="/delete/{{ app['id'] }}"
+                      onsubmit="return confirm('Delete this application?');">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </table>
