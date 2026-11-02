@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Application - InternTrack</title>
+</head>
+<body>
+    <h1>Add Application</h1>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" action="/add">
+        <p>Company Name: <input type="text" name="company_name"></p>
+        <p>Job Role: <input type="text" name="job_role"></p>
+        <p>Job Type:
+            <select name="job_type">
+                <option>Internship</option>
+                <option>Full-time</option>
+            </select>
+        </p>
+        <p>Location: <input type="text" name="location"></p>
+        <p>Applied Date: <input type="date" name="applied_date"></p>
+        <p>Deadline: <input type="date" name="deadline"></p>
+        <p>Status:
+            <select name="application_status">
+                <option>Applied</option>
+                <option>Shortlisted</option>
+                <option>Interview</option>
+                <option>Selected</option>
+                <option>Rejected</option>
+            </select>
+        </p>
+        <p>Job Link: <input type="text" name="job_link"></p>
+        <p>Notes: <textarea name="notes"></textarea></p>
+        <button type="submit">Save Application</button>
+    </form>
+
+    <p><a href="/">Back to Home</a></p>
+</body>
+</html>
