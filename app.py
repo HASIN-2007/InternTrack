@@ -7,9 +7,18 @@ from flask import (Flask, render_template, request, redirect, abort,
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key-change-me")
 
-DATABASE = "database.db"
+app.config["SECRET_KEY"] = os.environ.get(
+    "SECRET_KEY",
+    "dev-secret-key-change-me"
+)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATABASE = os.environ.get(
+    "DATABASE_PATH",
+    os.path.join(BASE_DIR, "database.db")
+)
 
 
 def init_db():
@@ -336,6 +345,8 @@ def export_csv():
     return response
 
 
+# Initialize database when the application starts
+init_db()
+
 if __name__ == "__main__":
-    init_db()
-    app.run(debug=True)
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1")
